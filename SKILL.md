@@ -1,13 +1,9 @@
 ---
 name: oss-startup-radar
-description: >
-  Finds fast-growing, pre-Series-A open source AI/ML startups using GitHub star velocity
-  (30/60/90-day windows) and community buzz from Reddit + Hacker News. Surfaces the top 25
-  repos with full blurbs plus top 5 trending themes. Use this skill whenever the user asks
-  about: fast-growing AI open source projects, hot OSS startups, what's trending in AI GitHub,
-  which AI repos are blowing up, pre-seed/seed AI companies to watch, emerging AI tools, or
-  anything about discovering new AI projects via GitHub stars or Reddit buzz. Trigger even if
-  they just ask "what's hot in AI OSS" or "any interesting AI repos lately".
+description: "Finds fast-growing, pre-Series-A open source AI/ML startups using GitHub star velocity (30/60/90-day windows) and community buzz from Reddit + Hacker News. Surfaces the top 25 repos with full blurbs plus top 5 trending themes. Use this skill whenever the user asks about: fast-growing AI open source projects, hot OSS startups, what's trending in AI GitHub, which AI repos are blowing up, pre-seed/seed AI companies to watch, emerging AI tools, or anything about discovering new AI projects via GitHub stars or Reddit buzz. Trigger even if they just ask \"what's hot in AI OSS\" or \"any interesting AI repos lately\"."
+argument-hint: 'oss-startup-radar'
+allowed-tools: Bash, Read, Write
+user-invocable: true
 ---
 
 # OSS Startup Radar
