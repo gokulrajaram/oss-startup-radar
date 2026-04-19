@@ -28,13 +28,13 @@ Outputs: top 25 repos ranked by composite score (60% velocity + 40% community), 
 
 ## Pipeline (run steps in order)
 
-Scripts live at `~/Documents/oss-startup-radar/scripts/`. Each step reads from the previous step's output.
+Scripts live at `$SKILL_ROOT/scripts/`. Each step reads from the previous step's output.
 
 ### Step 1 — Fetch candidates (~1 min)
 
 ```bash
 source ~/.github_token 2>/dev/null || true
-python3 ~/Documents/oss-startup-radar/scripts/fetch_candidates.py --limit 200 > /tmp/candidates.json
+python3 $SKILL_ROOT/scripts/fetch_candidates.py --limit 200 > /tmp/candidates.json
 ```
 
 Searches GitHub for recent AI/ML repos (created after 2024-01-01) and older repos with recent push activity. Returns ~150–200 repos. Filters: 50–300k stars, not a fork, passes AI keyword/topic check.
@@ -42,7 +42,7 @@ Searches GitHub for recent AI/ML repos (created after 2024-01-01) and older repo
 ### Step 2 — Star velocity (~4–6 min)
 
 ```bash
-python3 ~/Documents/oss-startup-radar/scripts/star_velocity.py /tmp/candidates.json > /tmp/velocity.json
+python3 $SKILL_ROOT/scripts/star_velocity.py /tmp/candidates.json > /tmp/velocity.json
 ```
 
 Fetches the last 1,500 stargazers (timestamped) for each repo. Computes 30d/60d/90d star gains and stars/day. Young repo correction: if the repo is younger than the window and the sample looks incomplete, uses total stars as the window count. Drops repos that are old AND quiet (<30 stars/30d and <5% momentum). Outputs ~100–150 repos.
@@ -50,7 +50,7 @@ Fetches the last 1,500 stargazers (timestamped) for each repo. Computes 30d/60d/
 ### Step 3 — Community signal (~3–4 min)
 
 ```bash
-python3 ~/Documents/oss-startup-radar/scripts/last30days_signal.py /tmp/velocity.json > /tmp/community.json
+python3 $SKILL_ROOT/scripts/last30days_signal.py /tmp/velocity.json > /tmp/community.json
 ```
 
 Runs `last30days --github-repo owner/repo --search reddit,hackernews --quick --lookback-days 30` for each repo. Filters results to posts where title/snippet/body/URL contains the repo or org name (prevents false positives from common-word matches). HN posts weighted 2× Reddit. Outputs a `reddit` field per repo compatible with the scorer.
@@ -60,7 +60,7 @@ Runs `last30days --github-repo owner/repo --search reddit,hackernews --quick --l
 ### Step 4 — Funding check (~2–3 min)
 
 ```bash
-python3 ~/Documents/oss-startup-radar/scripts/funding_check.py /tmp/community.json > /tmp/funded.json
+python3 $SKILL_ROOT/scripts/funding_check.py /tmp/community.json > /tmp/funded.json
 ```
 
 For each org: Crunchbase scrape → org homepage → GitHub org API → DuckDuckGo snippet. Conservative: `unknown` is included. Only `series-a` and `series-b+` are excluded. Known post-Series-A orgs are hardcoded in `score_and_rank.py` as a fallback.
@@ -68,7 +68,7 @@ For each org: Crunchbase scrape → org homepage → GitHub org API → DuckDuck
 ### Step 5 — Score, rank, and report
 
 ```bash
-python3 ~/Documents/oss-startup-radar/scripts/score_and_rank.py /tmp/funded.json > /tmp/report.md
+python3 $SKILL_ROOT/scripts/score_and_rank.py /tmp/funded.json > /tmp/report.md
 cat /tmp/report.md
 ```
 
