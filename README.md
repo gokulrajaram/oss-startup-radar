@@ -1,6 +1,6 @@
 # OSS Startup Radar
 
-A Claude Code skill that finds fast-growing **pre-Series-A** open source AI/ML startups using GitHub star velocity and community buzz from Reddit + Hacker News.
+A Claude Code and Codex skill that finds fast-growing **pre-Series-A** open source AI/ML startups using GitHub star velocity and community buzz from Reddit + Hacker News.
 
 Outputs: top 25 repos ranked by composite score (60% velocity + 40% community), plus top 5 trending themes.
 
