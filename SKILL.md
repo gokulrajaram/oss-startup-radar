@@ -129,7 +129,8 @@ composite = 0.60 × velocity_score + 0.40 × community_score
 The report contains:
 - **Header**: date, methodology summary, count of post-Series-A repos excluded
 - **Top 5 Trending Themes**: each with a 2–3 sentence observation and 3 key project names
-- **Top 25 repos**: for each — GitHub link, language, age, momentum label, funding stage, 30/60/90d velocity table, community signal (post count + top post link), description, composite score breakdown
+- **Top 25 summary table**: compact one-row-per-repo table with columns `# | Repo (linked) | ⭐ stars | +30d gain | Description | Founders (with LinkedIn)`. The Founders column is filled in by Step 6.
+- **Top 25 per-repo blocks**: for each — GitHub link, language, age, momentum label, funding stage, 30/60/90d velocity table, community signal (post count + top post link), description, composite score breakdown
 - **Founder & Contributor LinkedIn Profiles** *(added by Step 6)*: for each repo, the top 2–3 contributors with their GitHub profile link and LinkedIn URL (where found)
 
 Present the full report in the conversation. If the user wants a shorter version, summarize the themes and show the ranked list without the velocity tables.
