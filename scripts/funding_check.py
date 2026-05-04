@@ -129,10 +129,10 @@ def main():
         else:
             print(f"  → {cache[org]['stage']} (cached)", file=sys.stderr)
         repo["funding"] = cache[org]
-        repo["is_post_series_a"] = cache[org]["stage"] in ("series-a","series-b+")
+        repo["is_post_series_a"] = cache[org]["stage"] in ("series-b+",)
         enriched.append(repo)
     excl = sum(1 for r in enriched if r["is_post_series_a"])
-    print(f"[info] {excl}/{len(enriched)} flagged post-Series-A", file=sys.stderr)
+    print(f"[info] {excl}/{len(enriched)} flagged Series B+ (excluded)", file=sys.stderr)
     print(json.dumps(enriched, indent=2))
 
 if __name__ == "__main__": main()

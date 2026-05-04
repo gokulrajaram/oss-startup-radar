@@ -61,20 +61,32 @@ def fmt_age(d):
 
 LANG_E = {"Python":"🐍","Rust":"🦀","TypeScript":"🔷","JavaScript":"🟨","Go":"🐹","C++":"⚡","C":"⚡"}
 MOM_L = {"very_hot":"🔥🔥 Very Hot","hot":"🔥 Hot","growing":"📈 Growing","mature":"📊 Mature"}
-FUND_L = {"pre-seed":"Pre-seed","seed":"Seed 🌱","series-a":"Series A","series-b+":"Series B+","unknown":"Unknown (assumed pre-A)"}
+FUND_L = {"pre-seed":"Pre-seed","seed":"Seed 🌱","series-a":"Series A 🅰️","series-b+":"Series B+","unknown":"Unknown (pre-A)"}
 
 def build_report(repos, themes, n_excl):
     date_str = NOW.strftime("%B %d, %Y")
     L = [
         f"# OSS Startup Radar — {date_str}",
-        f"*Pre-Series-A open source AI/ML · 30/60/90-day star velocity + Reddit buzz · {n_excl} post-Series-A repos excluded*",
+        f"*Pre-Series-B open source AI/ML · 30/60/90-day star velocity + Reddit buzz · {n_excl} Series B+ repos excluded · Series A included and labeled 🅰️*",
         "", "---", "", "## Top 5 Trending Themes", "",
     ]
     for i,t in enumerate(themes,1):
         L += [f"### {i}. {t['name']}", t["observation"],
               f"**Key projects:** {', '.join(f'`{n}`' for n in t['top_repo_names'])}", ""]
 
-    L += ["---", "", f"## Top {len(repos)} Fast-Growing Pre-Series-A Projects", ""]
+    L += ["---", "", f"## Top {len(repos)} Fast-Growing Pre-Series-B Projects", ""]
+
+    # Compact summary table — founders column filled in by linkedin_lookup.py (Step 6)
+    L.append("| # | Repo | ⭐ | +30d | Description | Founders |")
+    L.append("|---|------|----|------|-------------|----------|")
+    for rank, repo in enumerate(repos, 1):
+        vel  = repo.get("velocity", {})
+        total      = vel.get("total_stars", repo.get("stars", 0))
+        gained_30d = vel.get("30d", {}).get("gained", 0)
+        desc = (repo.get("description") or "").strip()
+        desc_short = (desc[:75] + "…") if len(desc) > 75 else desc
+        L.append(f"| {rank} | [{repo['repo']}]({repo['html_url']}) | {fmt(total)} | +{fmt(gained_30d)} | {desc_short} | `FOUNDERS_PLACEHOLDER_{rank}` |")
+    L.append("")
 
     for rank, repo in enumerate(repos, 1):
         vel   = repo.get("velocity", {})
@@ -138,8 +150,8 @@ NON_STARTUP_ORGS = {
     "yamadashy","d4vinci",
     "kvcache-ai",
 }
-# Known post-Series-A orgs that our automated funding check misses
-KNOWN_POST_SERIES_A = {"onyx-dot-app","danswer-ai","deepset-ai","rssplusone","rssnext","mindsdb","wandb","prefecthq","e2b-dev"}
+# Known Series-B+ orgs that our automated funding check misses (Series A orgs are now included)
+KNOWN_SERIES_B_PLUS = {"onyx-dot-app","deepset-ai","rssplusone","rssnext","wandb"}
 NON_STARTUP_DESC = [
     "curated list","awesome list","tutorial","learning resource","cheat sheet","collection of",
     "a list of","resources for","getting started","study guide","interview prep","course material",
@@ -179,21 +191,36 @@ def main():
                    v.get("90d",{}).get("gained",0))
     repos = [r for r in repos if best_window_gained(r) >= 20]
     print(f"[info] Velocity floor: {before_vel} → {len(repos)} repos (≥20 stars in any window)", file=sys.stderr)
+    # Inflation filter: very young repos with huge star counts but no community discussion
+    # are almost always star-bombing artifacts (e.g. fake "open-source X alternative" repos).
+    def is_inflated(r):
+        stars = r.get("velocity", {}).get("total_stars", r.get("stars", 0))
+        age = r.get("velocity", {}).get("age_days") or 9999
+        red = r.get("reddit", {})
+        weighted = red.get("reddit_count", 0) + 2 * red.get("hn_count", 0)
+        return stars > 3000 and weighted < 5 and age < 60
+    before_inf = len(repos)
+    dropped_inf = [r["full_name"] for r in repos if is_inflated(r)]
+    repos = [r for r in repos if not is_inflated(r)]
+    print(f"[info] Inflation filter: {before_inf} → {len(repos)} repos · dropped: {dropped_inf}", file=sys.stderr)
     # Fix 3: Filter non-startups (awesome lists, big tech orgs, tutorial repos)
     before_ns = len(repos)
     repos = [r for r in repos if is_startup(r)]
     print(f"[info] Non-startup filter: {before_ns} → {len(repos)} repos", file=sys.stderr)
-    # Override funding for known post-Series-A orgs
+    # Override funding for known Series-B+ orgs
     for r in repos:
-        if r.get("org","").lower() in KNOWN_POST_SERIES_A:
+        if r.get("org","").lower() in KNOWN_SERIES_B_PLUS:
             r["is_post_series_a"] = True
-            r["funding"] = {"stage":"series-a","source":"known_override","note":"known Series A from training data"}
+            r["funding"] = {"stage":"series-b+","source":"known_override","note":"known Series B+ from training data"}
     included = [r for r in repos if not r.get("is_post_series_a",False)]
     excluded = [r for r in repos if r.get("is_post_series_a",False)]
-    print(f"[info] Excluded {len(excluded)} post-Series-A: {[r['full_name'] for r in excluded[:8]]}", file=sys.stderr)
+    print(f"[info] Excluded {len(excluded)} Series B+: {[r['full_name'] for r in excluded[:8]]}", file=sys.stderr)
     included.sort(key=lambda r: r["composite_score"], reverse=True)
     top = included[:TOP_N]
     themes = classify_themes(top)
+    # Write ranked JSON for downstream steps (e.g. linkedin_lookup.py)
+    with open("/tmp/ranked.json", "w") as f:
+        json.dump(top, f)
     print(build_report(top, themes, len(excluded)))
 
 if __name__ == "__main__": main()

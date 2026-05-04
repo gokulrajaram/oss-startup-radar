@@ -65,13 +65,32 @@ For each org: Crunchbase scrape → org homepage → GitHub org API → DuckDuck
 
 ```bash
 python3 $SKILL_ROOT/scripts/score_and_rank.py /tmp/funded.json > /tmp/report.md
-cat /tmp/report.md
 ```
 
-Applies three filters (velocity floor ≥20 stars in best window, non-startup filter, funding filter), sorts by composite score, synthesizes top 5 themes, and outputs a full Markdown report.
+Applies three filters (velocity floor ≥20 stars in best window, non-startup filter, funding filter), sorts by composite score, synthesizes top 5 themes, and outputs a full Markdown report. Also writes `/tmp/ranked.json` (top 25 repos as JSON, used by Step 6).
 
-Also save a dated copy:
+### Step 6 — LinkedIn lookup (~3–5 min)
+
 ```bash
+python3 $SKILL_ROOT/scripts/linkedin_lookup.py /tmp/ranked.json /tmp/report.md
+```
+
+For each of the top 25 repos:
+1. Calls the GitHub Contributors API to get the top 2–3 contributors by commit count (bots and CI accounts are skipped automatically)
+2. Resolves each contributor's display name via the GitHub Users API
+3. Searches DuckDuckGo (`site:linkedin.com/in`) to find their LinkedIn profile URL
+4. Appends a **Founder & Contributor LinkedIn Profiles** section to `/tmp/report.md`
+
+Results are also saved to `/tmp/linkedin.json`.
+
+**Notes:**
+- Requires `GITHUB_TOKEN` — without it, contributor lookups will hit rate limits quickly
+- LinkedIn URLs are found via web search, not the LinkedIn API — always verify before outreach
+- If DDG blocks requests mid-run, the script logs a warning and marks the profile as "not found" rather than failing
+
+After Step 6, display the full report and save a dated copy:
+```bash
+cat /tmp/report.md
 cp /tmp/report.md ~/Documents/oss-startup-radar/latest_report.md
 ```
 
@@ -111,6 +130,7 @@ The report contains:
 - **Header**: date, methodology summary, count of post-Series-A repos excluded
 - **Top 5 Trending Themes**: each with a 2–3 sentence observation and 3 key project names
 - **Top 25 repos**: for each — GitHub link, language, age, momentum label, funding stage, 30/60/90d velocity table, community signal (post count + top post link), description, composite score breakdown
+- **Founder & Contributor LinkedIn Profiles** *(added by Step 6)*: for each repo, the top 2–3 contributors with their GitHub profile link and LinkedIn URL (where found)
 
 Present the full report in the conversation. If the user wants a shorter version, summarize the themes and show the ranked list without the velocity tables.
 
